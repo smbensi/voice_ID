@@ -1,0 +1,23 @@
+# convert audio file to mono
+-i input.wav — your input file
+-ac 1 — sets the number of audio channels to 1 (mono)
+output_mono.wav — your mono output file
+
+`ffmpeg -i input.wav -ac 1 output_mono.wav`
+
+# take only the 1st second of long audio
+-i input.wav — your input audio file
+-t 1 — duration in seconds (1 second)
+-c copy — copies the audio codec (fast, no re-encoding)
+output.wav — your output file with just the first second
+
+`ffmpeg -i input.wav -t 1 -c copy output.wav`
+
+
+# You can extract seconds 17 to 22 from an MP3 file using ffmpeg:
+`ffmpeg -i input.mp3 -ss 17 -t 5 -c copy output_17_22.mp3`
+
+-ss 17 — start at 17 seconds
+-t 5 — duration (22-17=5 seconds)
+-c copy — copy audio without re-encoding (fast)
+Replace input.mp3 and output_17_22.mp3 with your filenames.

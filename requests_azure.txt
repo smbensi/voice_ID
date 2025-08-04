@@ -1,0 +1,28 @@
+curl --location 'https://eastus.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15' --header 'Content-Type: multipart/form-data' --header 'Ocp-Apim-Subscription-Key: 15390f727b0941f68fc6d7e42f3e0f79' --form 'audio=@"Huberman.mp3"' --form 'definition="{
+    "locales":["en-US"], 
+    "diarization": {"maxSpeakers": 2,"enabled": true}}"'
+
+
+
+
+curl --location 'https://<region>.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15' --header 'Content-Type: multipart/form-data' --header 'Ocp-Apim-Subscription-Key: ,secret-key' --form 'audio=@"Huberman.mp3"' --form 'definition="{
+    "locales":["en-US"], 
+    "diarization": {"maxSpeakers": 2,"enabled": true}}"'
+
+returns
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Definition":["Invalid JSON format."]},"traceId":"00-729c16874b2f05b33949c94ba7b251de-3455820f48fbcd05-00"}
+
+
+
+
+
+curl --location 'https://eastus.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15'  --header 'Ocp-Apim-Subscription-Key: 15390f727b0941f68fc6d7e42f3e0f79' --form 'audio=@"Huberman.mp3"' --form 'definition="{
+    "locales":["en-US"], 
+    "diarization": {"maxSpeakers": 2,"enabled": true}}"'
+
+
+
+curl --location "https://eastus.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15" \
+  --header "Ocp-Apim-Subscription-Key: 15390f727b0941f68fc6d7e42f3e0f79" \
+  --form audio=@Huberman.mp3 \
+  --form definition='{"locales":["en-US"],"diarization":{"enabled":true,"maxSpeakers":2}}'
