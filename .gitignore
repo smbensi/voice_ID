@@ -1,4 +1,9 @@
 venv
 *.mp3
+*.wav
+
+*.pyc
+*.egg-info 
+
 data
 requests_azure.txt

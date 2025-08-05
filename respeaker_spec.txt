@@ -1,0 +1,6 @@
+Channel 0: processed audio for ASR
+Channel 1: mic1 raw data
+Channel 2: mic2 raw data
+Channel 3: mic3 raw data
+Channel 4: mic4 raw data
+Channel 5: merged playback

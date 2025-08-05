@@ -1,0 +1,37 @@
+defaults.pcm.rate_converter "samplerate"
+
+pcm.dmic_sv {
+    type dsnoop // dsnoop: allows multiple simultaneous reads from the same hardware capture device (mic sharing)
+    ipc_key 7777
+    ipc_perm 0666
+    ipc_key_add_uid false
+    slave {
+        pcm "hw:CARD=ArrayUAC10,DEV=0"  // References hardware soundcard hw:CARD=ArrayUAC10,DEV=0, i.e. your ReSpeaker array.
+        channels 6
+        rate 16000
+        format S16_LE  // Configured for 6 channels at 16 kHz, 16-bit little endian.
+    }
+}
+
+pcm.respeaker_dmix {
+    type dmix
+    ipc_key 7777
+    ipc_perm 0666
+    ipc_key_add_uid false
+    slave {
+        pcm "hw:CARD=ArrayUAC10,DEV=0"
+    }
+}
+
+pcm.respeaker {
+   type plug
+   slave {
+       pcm "respeaker_dmix"
+   }
+}
+
+pcm.!default {
+    type asym
+    playback.pcm "respeaker"
+    capture.pcm "dmic_sv"
+}
