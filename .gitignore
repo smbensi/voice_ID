@@ -6,4 +6,3 @@ venv
 *.egg-info 
 
 data
-requests_azure.txt
