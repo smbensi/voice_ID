@@ -32,7 +32,7 @@ class SpeakerVerificationPipeline:
     def check_audio_is_mono(self, audio_path: str) -> bool:
 
         # Load audio (returns waveform and sample rate)
-        waveform, sample_rate = torchaudio.load("input.wav")  # or .mp3, .aac, etc.
+        waveform, sample_rate = torchaudio.load(audio_path)  # or .mp3, .aac, etc.
         
         # Check sample rate
         if sample_rate != 16000:
@@ -54,6 +54,17 @@ class SpeakerVerificationPipeline:
         # torchaudio.save("output_mono.wav", mono_waveform, sample_rate)
         return mono_waveform
     
+    
+    def get_embedding_file(self, audio_path: str):
+        # mono_waveform = self.check_audio_is_mono(audio_path)
+        # embs = self.infer_segment(mono_waveform)[0].squeeze()
+        embs = self.speaker_model.get_embedding(audio_path).squeeze()
+        return embs
+    
+    def get_embedding_segment(self, audio_segment: np.ndarray):
+        embs = self.infer_segment(audio_segment)[0].squeeze()
+        return embs
+    
     def similarity(self, path2audio_file1, path2audio_file2, threshold=0.7):
         """
         Verify if two audio files are from the same speaker or not.
@@ -67,22 +78,18 @@ class SpeakerVerificationPipeline:
             True if both audio files are from same speaker, False otherwise
         """
         if isinstance(path2audio_file1, str):
-            embs1 = self.speaker_model.get_embedding(path2audio_file1).squeeze()
+            embs1 = self.get_embedding_file(path2audio_file1)
         else:
-            # LOGGER.debug(f"Inferring segment for {path2audio_file1} shape {path2audio_file1.shape}")
-            embs1 = self.speaker_model.infer_segment(path2audio_file1)[0].squeeze()
+            embs1 = self.get_embedding_segment(path2audio_file1)
         LOGGER.debug(f"Embeddings 1 shape: {embs1.shape}")
+        
         if isinstance(path2audio_file2, str):
-            embs2 = self.speaker_model.get_embedding(path2audio_file2).squeeze()
+            embs2 = self.get_embedding_file(path2audio_file2)
         else:
-            embs2 = self.speaker_model.infer_segment(path2audio_file2)[0].squeeze()
+            embs2 = self.get_embedding_segment(path2audio_file2)
         LOGGER.debug(f"Embeddings 2 shape: {embs2.shape}")
-        # Length Normalize
-        X = embs1 / torch.linalg.norm(embs1)
-        Y = embs2 / torch.linalg.norm(embs2)
-        # Score
-        similarity_score = torch.dot(X, Y) / ((torch.dot(X, X) * torch.dot(Y, Y)) ** 0.5)
-        similarity_score = (similarity_score + 1) / 2
+        
+        similarity_score = self.compare_embeddings(embs1, embs2)
         # LOGGER.info(f"Similarity score between {path2audio_file1} and {path2audio_file2}: {similarity_score.item()}")
         return similarity_score
         
@@ -93,7 +100,17 @@ class SpeakerVerificationPipeline:
         # else:
         #     logging.info(" two audio files are from different speakers")
         #     return False
-        
+    
+    def compare_embeddings(self, embs1, embs2):
+        # Length Normalize
+        if embs1.ndim != 1 or embs2.ndim != 1:
+            raise ValueError(f"Embeddings must be 1-dimensional arrays. {embs1.ndim=}, {embs2.ndim=}")
+        X = embs1 / torch.linalg.norm(embs1)
+        Y = embs2 / torch.linalg.norm(embs2)
+        # Score
+        similarity_score = torch.dot(X, Y) / ((torch.dot(X, X) * torch.dot(Y, Y)) ** 0.5)
+        similarity_score = (similarity_score + 1) / 2
+        return similarity_score
         
     def infer_segment(self, segment):
         """
@@ -106,20 +123,20 @@ class SpeakerVerificationPipeline:
         """
         segment_length = segment.shape[0]
 
-        device = self.device
+        device = self.speaker_model.device
         # audio = np.array([segment])
         audio = segment 
         audio_signal, audio_signal_len = (
             torch.tensor(audio, device=device, dtype=torch.float32),
             torch.tensor([segment_length], device=device),
         )
-        mode = self.training
-        self.freeze()
+        mode = self.speaker_model.training
+        self.speaker_model.freeze()
 
         logits, emb = self.speaker_model.forward(input_signal=audio_signal, input_signal_length=audio_signal_len)
 
-        self.train(mode=mode)
+        self.speaker_model.train(mode=mode)
         if mode is True:
-            self.unfreeze()
+            self.speaker_model.unfreeze()
         del audio_signal, audio_signal_len
         return emb, logits
