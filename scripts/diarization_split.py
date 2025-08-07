@@ -60,12 +60,12 @@ if __name__ == "__main__":
     # python split_phrases.py
     # Edit the paths below or wire them to argparse if you prefer CLI args.
     
-    out_dir = "/home/mat/Documents/voice_ID/data/long_audio/reunion_split"
+    out_dir = "/home/mat/Documents/voice_ID/data/long_audio/adina_sagi"
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     split_phrases(
-        audio_path="/home/mat/Documents/voice_ID/data/long_audio/reunion_jake_20_min.wav",     # <-- your original audio file
-        json_path="/home/mat/Documents/voice_ID/data/long_audio/reunion_jake_no_words.json",      # <-- your JSON file
+        audio_path="/home/mat/Documents/voice_ID/data/long_audio/adina_sagi.wav",     # <-- your original audio file
+        json_path="/home/mat/Documents/voice_ID/data/long_audio/adina_sagi_no_words.json",      # <-- your JSON file
         out_dir=out_dir,
         fmt="wav",
         normalize_mono_16k=False       # set True if you want mono/16k output

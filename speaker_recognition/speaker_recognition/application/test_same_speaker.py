@@ -15,6 +15,7 @@ audio_file = "/home/mat/Documents/voice_ID/mathias_respeaker_sample.wav"
 
 
 reference_audio = "/home/mat/Documents/voice_ID/data/jake/jake_signature.wav"
+reference_audio = "/home/mat/Documents/voice_ID/data/adina/adina.wav"
 
 
 pipe = SpeakerVerificationPipeline(model_name="titanet_small")
@@ -30,7 +31,7 @@ def get_audio_duration(file_path):
     duration = info.num_frames / info.sample_rate
     return duration
 
-folder_path = "/home/mat/Documents/voice_ID/data/long_audio/reunion_split/3"
+folder_path = "//home/mat/Documents/voice_ID/data/long_audio/adina_sagi/3"
 chunks = [os.path.join(folder_path, f) for f in os.listdir(folder_path) 
           if os.path.isfile(os.path.join(folder_path, f)) and 
           get_audio_duration(os.path.join(folder_path, f)) > 1]
@@ -41,7 +42,7 @@ mean_similarity = 0
 
 for i, chunk in enumerate(chunks):
     similarity_score = pipe.similar_speakers(chunk, reference_audio)
-    LOGGER.info(f"Chunk {i} with duration {durations[i]} verification result: {similarity_score}")
+    LOGGER.info(f"Chunk {chunk} with duration {durations[i]} verification result: {similarity_score:.2f}")
     mean_similarity += similarity_score
 
 mean_similarity /= len(chunks)

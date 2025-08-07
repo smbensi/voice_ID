@@ -1,0 +1,25 @@
+# apt-get install sox libsndfile1 ffmpeg    
+# ## Install NeMo
+# BRANCH = 'r2.0.0rc0'
+# pip install git+https://github.com/NVIDIA/NeMo.git@$BRANCH#egg=nemo_toolkit[asr]
+
+
+omegaconf==2.3.0
+numpy<2
+transformers==4.40.0
+huggingface_hub==0.21.3
+datasets==2.19.0
+tokenizers==0.19.1
+# torch==2.6.0+cu124
+torch==2.6.0
+# nemo_toolkit[asr]==2.0.0
+# nemo==2.0.0rc0
+wget
+text-unidecode
+torchaudio>=0.10.0
+soundfile
+pandas
+paho-mqtt==1.6.1
+pydub
+sounddevice
+pymongo==4.6.1
