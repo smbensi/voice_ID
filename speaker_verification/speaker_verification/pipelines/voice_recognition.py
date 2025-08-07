@@ -2,15 +2,21 @@ import torch
 import numpy as np
 import pandas as pd
 
-from nemo.collections.asr.models import EncDecSpeakerLabelModel
+import logging
 
+from nemo.collections.asr.models import EncDecSpeakerLabelModel
+# Set NeMo log level before importing NeMo
+logging.getLogger("nemo_logger").setLevel(logging.ERROR)
+
+from speaker_verification import LOGGER
 from speaker_verification.settings import recognition_params
 
 class VoiceRecognition:
     
     def __init__(self, model_name: str = "titanet_small"):
         self.speaker_model = EncDecSpeakerLabelModel.from_pretrained(model_name=model_name)
-        self.embeddings = pd.json_normalize(recognition_params.EMBEDDING_FILE)
+        self.embeddings = pd.read_json(recognition_params.EMBEDDING_FILE)
+        # self.embeddings = None
 
     
     def similar_speakers(self, audio1: str, audio2: str) -> bool:
@@ -30,7 +36,7 @@ class VoiceRecognition:
         embs = self.infer_segment(audio_segment)[0].squeeze()
         return embs
     
-    
+            
     def is_recognized(self, audio: str | np.ndarray, reference_audio: str | list[np.ndarray] = None) -> bool:
         """
         Verify if the audio is recognized as the same speaker as the reference audios.
@@ -42,6 +48,7 @@ class VoiceRecognition:
         Returns:
             bool: True if recognized, False otherwise.
         """
+        # reference_audio = "/home/mat/Documents/voice_ID/data/jake/jake_signature.wav"
         if isinstance(audio, str):
             audio_embedding = self.get_embedding_from_audio_file(audio)
         elif isinstance(audio, np.ndarray):
@@ -51,9 +58,12 @@ class VoiceRecognition:
             # compare to embeddings in database
             for _, row in self.embeddings.iterrows():
                 reference_embedding = torch.tensor(row['embedding'])
+                if audio_embedding.is_cuda:
+                    audio_embedding = audio_embedding.to("cpu")
                 similarity_score = self.compare_embeddings(audio_embedding, reference_embedding)
+                LOGGER.debug(f"name = {row['name']}, {similarity_score=}")
                 if similarity_score > recognition_params.THRESHOLD:
-                    return row['speaker_id'] 
+                    return row['name'] 
         
         elif isinstance(reference_audio, str):
             reference_embedding = self.get_embedding_from_audio_file(reference_audio)
@@ -86,6 +96,8 @@ class VoiceRecognition:
             logits: logits corresponding of final layer
         """
         segment_length = segment.shape[0]
+        if segment.ndim == 1:
+            segment = np.expand_dims(segment, axis=0)  
 
         device = self.speaker_model.device
         # audio = np.array([segment])
