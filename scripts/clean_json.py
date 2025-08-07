@@ -1,7 +1,7 @@
 import json
 
-input_path = "/home/mat/Documents/voice_ID/transcription_huberman.json"
-output_path = "/home/mat/Documents/voice_ID/transcription_huberman_no_words.json"
+input_path = "/home/mat/Documents/voice_ID/data/long_audio/reunion_jake.json"
+output_path = "/home/mat/Documents/voice_ID/data/long_audio/reunion_jake_no_words.json"
 
 with open(input_path, "r") as f:
     data = json.load(f)

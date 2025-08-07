@@ -6,3 +6,4 @@ venv
 *.egg-info 
 
 data
+azure_with_key.txt
