@@ -11,9 +11,12 @@ huggingface_hub==0.21.3
 datasets==2.19.0
 tokenizers==0.19.1
 # torch==2.6.0+cu124
-torch==2.6.0
+torch==2.4.0
 nemo==2.0.0
 # nemo==2.0.0rc0
 wget
 text-unidecode
 torchaudio>=0.10.0
+pydub
+sounddevice
+soundfile

@@ -7,6 +7,7 @@ import json
 import pandas as pd
 import librosa
 import soundfile as sf
+import time 
 
 from speaker_verification.mqtt.mqtt_handler import init_mqtt_connection
 from speaker_verification.settings import mqtt_settings, recognition_params
@@ -15,6 +16,7 @@ from speaker_verification import LOGGER
 from speaker_verification.pipelines.voice_recognition import VoiceRecognition
 # A thread-safe queue to hold the audio data
 audio_queue = Queue()
+start = time.time()
 
 def audio_callback(indata, frames, time, status):
     """
@@ -40,7 +42,7 @@ class ProcessStream:
             result = voice_verification_pipeline.is_recognized(self.audio_data)
             audio_file = f"output_{self.index}.wav"
             print(f"Verification result for microphone {audio_file}: {result}")
-            sf.write(f'/home/mat/Documents/voice_ID/audio_streaming_data/{audio_file}', self.audio_data, samplerate=16000)
+            # sf.write(f'/code/audio_streaming_data/{audio_file}', self.audio_data, samplerate=16000)
             self.index += 1
             self.audio_data = np.empty((0,), dtype=np.float32) 
             
@@ -59,7 +61,7 @@ def start_audio_stream(mic_processor, samplerate=16000, channels=1, blocksize=10
                             channels=channels,
                             blocksize=blocksize,
                             callback=audio_callback):
-
+            LOGGER.debug(f"time of loading = {time.time() - start:.1f} sec")
             # Continuously get audio data from the queue and process it
             while True:
                 audio_data = audio_queue.get()
@@ -76,8 +78,11 @@ def process_audio_file(audio_file, voice_verification_pipeline):
     """
     duration = librosa.get_duration(filename=audio_file)
     # Pass the audio data to the voice verification pipeline
-    result = voice_verification_pipeline.is_recognized(audio_file)
-    print(f"Verification result for {audio_file} {duration=}: {result}")
+    if recognition_params.RECOGNIZE:
+        result = voice_verification_pipeline.is_recognized(audio_file)
+        print(f"Verification result for {audio_file} {duration=}: {result}")
+        if isinstance(result, str):
+            mqtt_settings.VOICE_CLIENT.publish(mqtt_settings.TOPICS_TO_BRAIN["VOICE_RECOGNIZED"],result)
 
 def process_registration(name, audio_file, voice_verification):
     embedding_file = recognition_params.EMBEDDING_FILE
@@ -95,10 +100,12 @@ def process_registration(name, audio_file, voice_verification):
     df.to_json(embedding_file, orient="records", indent=2)
 
 if __name__ == "__main__":
+    
     mqtt_settings.VOICE_CLIENT = init_mqtt_connection(name="voice_verif")
     voice_verification_pipeline = VoiceRecognition(model_name="titanet_small")
-    audio_source = "mic"  # Change to "file" if you want to read from a file and "mic" for microphone input
+    audio_source = os.getenv("SOURCE","file")  # Change to "file" if you want to read from a file and "mic" for microphone input
     audio_path = "/home/mat/Documents/voice_ID/data/long_audio/adina_sagi/2"
+    audio_path = os.getenv("AUDIO_PATH","/code/jake")
     registration  = False
     if registration:
         name = "jake"

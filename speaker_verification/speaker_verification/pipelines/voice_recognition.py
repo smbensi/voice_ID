@@ -1,12 +1,26 @@
+from typing import Union, List
+
 import torch
 import numpy as np
 import pandas as pd
 
 import logging
 
+import importlib, types
+
+spec = importlib.util.find_spec("torch.distributed")
+if spec is not None:
+    dist = importlib.import_module("torch.distributed")
+    # Provide missing symbols expected by libs like NeMo
+    if not hasattr(dist, "is_available"):
+        dist.is_available = lambda: False
+    if not hasattr(dist, "is_initialized"):
+        dist.is_initialized = lambda: False
+# ----------------------------------------------
+
 from nemo.collections.asr.models import EncDecSpeakerLabelModel
 # Set NeMo log level before importing NeMo
-logging.getLogger("nemo_logger").setLevel(logging.ERROR)
+# logging.getLogger("nemo_logger").setLevel(logging.ERROR)
 
 from speaker_verification import LOGGER
 from speaker_verification.settings import recognition_params
@@ -14,14 +28,21 @@ from speaker_verification.settings import recognition_params
 class VoiceRecognition:
     
     def __init__(self, model_name: str = "titanet_small"):
-        self.speaker_model = EncDecSpeakerLabelModel.from_pretrained(model_name=model_name)
+        try:
+            restore_path = f"/code/models/{model_name}.nemo"
+            self.speaker_model = EncDecSpeakerLabelModel.restore_from(restore_path=restore_path)
+            LOGGER.debug("Model in system")
+
+        except Exception as e:
+            LOGGER.debug("Model not found need to download")
+            self.speaker_model = EncDecSpeakerLabelModel.from_pretrained(model_name=model_name)
         self.embeddings = pd.read_json(recognition_params.EMBEDDING_FILE)
         # self.embeddings = None
 
     
     def similar_speakers(self, audio1: str, audio2: str) -> bool:
         similarity_score = self.similarity(audio1, audio2)
-        return similarity_score > 0.7
+        return similarity_score > recognition_params.THRESHOLD
 
     def verify_speaker(self, audio_path: str, reference_audio: str) -> float:
         pass
@@ -37,7 +58,8 @@ class VoiceRecognition:
         return embs
     
             
-    def is_recognized(self, audio: str | np.ndarray, reference_audio: str | list[np.ndarray] = None) -> bool:
+    # def is_recognized(self, audio: str | np.ndarray, reference_audio: str | list[np.ndarray] = None) -> bool:
+    def is_recognized(self, audio: Union[str,np.ndarray], reference_audio: Union[str,List[np.ndarray]] = None) -> bool:
         """
         Verify if the audio is recognized as the same speaker as the reference audios.
         
@@ -56,14 +78,17 @@ class VoiceRecognition:
 
         if reference_audio is None:
             # compare to embeddings in database
+            max_similarity = 0
             for _, row in self.embeddings.iterrows():
                 reference_embedding = torch.tensor(row['embedding'])
                 if audio_embedding.is_cuda:
                     audio_embedding = audio_embedding.to("cpu")
                 similarity_score = self.compare_embeddings(audio_embedding, reference_embedding)
                 LOGGER.debug(f"name = {row['name']}, {similarity_score=}")
+                max_similarity =  max(similarity_score, max_similarity)
                 if similarity_score > recognition_params.THRESHOLD:
                     return row['name'] 
+            return max_similarity
         
         elif isinstance(reference_audio, str):
             reference_embedding = self.get_embedding_from_audio_file(reference_audio)

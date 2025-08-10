@@ -6,17 +6,20 @@
 
 omegaconf==2.3.0
 numpy<2
-transformers==4.40.0
+# transformers==4.40.0
+transformers==4.33.3
 huggingface_hub==0.21.3
 datasets==2.19.0
-tokenizers==0.19.1
+# tokenizers==0.19.1
+tokenizers<0.14
 # torch==2.6.0+cu124
-torch==2.6.0
-# nemo_toolkit[asr]==2.0.0
+# torch==2.4.1
+# nemo_toolkit[asr]==2.0.0rc0
+nemo_toolkit[asr]==1.21.0
 # nemo==2.0.0rc0
 wget
 text-unidecode
-torchaudio>=0.10.0
+# torchaudio>=0.10.0
 soundfile
 pandas
 paho-mqtt==1.6.1

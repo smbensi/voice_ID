@@ -1,0 +1,24 @@
+  services:
+    voice:
+      # image: IMAGEPLACEHOLDER
+      image: voice:latest
+      init: true
+      environment:
+        - SOURCE=mic
+        - RECOGNIZE=True
+        # - ASR_BACKEND_ONLINE=openai #or runpod
+      volumes:
+        - /home/nvidia/xtend/shared:/code/shared
+        - /home/nvidia/dev/voice_ID/embeddings.json:/code/embeddings.json
+        - /home/nvidia/dev/voice_ID/data/long_audio/reunion_jake_split/1:/code/jake
+        - /home/nvidia/dev/voice_ID/models:/code/models
+        # - /home/nvidia/.asoundrc:/root/.asoundrc
+      ipc: host
+      devices:
+        - "/dev/snd:/dev/snd"
+        - "/dev/bus/usb:/dev/bus/usb"
+      network_mode: "host"
+      # restart: on-failure
+      privileged: true
+      runtime: nvidia
+      command: "python3 -m speaker_verification.applications.main_verification"

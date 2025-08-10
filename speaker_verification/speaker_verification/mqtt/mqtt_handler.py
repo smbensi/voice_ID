@@ -1,7 +1,9 @@
+import json
+
 import paho.mqtt.client as mqtt
 
 from speaker_verification import LOGGER
-from speaker_verification.settings import mqtt_settings
+from speaker_verification.settings import mqtt_settings, recognition_params
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -35,7 +37,7 @@ def init_mqtt_connection(name="voice_verif"):
     global client
     client = mqtt.Client(client_id=name, clean_session=True)
     
-    # client.username_pw_set(username="nir", password="xtend_m2")
+    # client.username_pw_set(username="", password="")
     client.on_disconnect = on_disconnect
     client.on_connect = on_connect
     client.on_message = on_message
@@ -48,3 +50,7 @@ def on_message(client, userdata, message):
 
     if message.topic == mqtt_settings.TOPICS_FROM_BRAIN["IS_ALIVE"]:
         mqtt_settings.VOICE_CLIENT.publish(mqtt_settings.TOPICS_TO_BRAIN["APP_ALIVE"],json.dumps(mqtt_settings.msg_alive))
+    
+    elif message.topic == mqtt_settings.TOPICS_FROM_BRAIN["START_RECOGNIZE"]:
+        LOGGER.debug("Start recognize peolple")
+        recognition_params.RECOGNIZE = True
